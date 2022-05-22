@@ -1,6 +1,3 @@
-from copyreg import constructor
-from traceback import print_tb
-from turtle import pu
 import pygame as py
 from PIL import Image
 import os
@@ -8,7 +5,6 @@ import os
 py.init()
 
 background_colour = (15,16,18)
-#background_colour = (255,255,255)
 (width, height) = (1000, 1000)
 screen = py.display.set_mode((width, height))
 py.display.set_caption('Image Cropper')
@@ -16,7 +12,6 @@ screen.fill(background_colour)
 #py.display.flip()
 
 imageArray = os.listdir("img")
-print(imageArray)
 imageIndex = 0
 aspectX = 1
 aspectY = 1
@@ -138,24 +133,13 @@ def cropOutline():
     
     py.draw.rect(screen, (255,0,0), py.Rect(cropStartPoint[0], cropStartPoint[1], cropWidth, cropHeight), 2)
 
-
-def updateCropSettings():
-  global cropWidth, cropStartPoint, aspectX, aspectY
-  cropStartPoint[0] = 3
-  cropWidth = 2;
-
 w, h = py.display.get_surface().get_size()
 running = True
 lastType = 0;
 setCurrentImage()
 while running:
   screen.fill(background_colour)
-  for event in py.event.get():
-    if (lastType != event.type):
-      #print(event)
-      lastType = event.type
-
-    
+  for event in py.event.get():  
     if event.type == py.QUIT:
       running = False
     if event.type == py.MOUSEBUTTONDOWN: 
@@ -164,7 +148,6 @@ while running:
       if  (aspectX_rect.collidepoint(event.pos)):
         if (event.button == 1):
           aspectX+=1
-          updateCropSettings()
         if (event.button == 3 and aspectX > 1):
           aspectX-=1
       if  (aspectY_rect.collidepoint(event.pos)):
