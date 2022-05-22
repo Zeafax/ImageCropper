@@ -1,3 +1,4 @@
+from sys import dont_write_bytecode
 import pygame as py
 from PIL import Image
 import os
@@ -22,11 +23,11 @@ cropWidth = 0
 cropHeight = 0
 selectingCrop = False
 movingCrop = False
+done = False
 game_font = py.font.Font("Roboto-Regular.ttf",60)
 
-
 def setCurrentImage():
-  global current_image_rect, current_image_surface, imageIndex
+  global current_image_rect, current_image_surface, imageIndex, Crop_surface, Crop_rect, done 
   try:
     path = os.path.join("img",imageArray[imageIndex])
     current_image_surface = py.image.load(path)
@@ -50,10 +51,18 @@ def setCurrentImage():
 
   except:
     print("No more Images")
+    done = True
+    current_image_surface = game_font.render("DONE!",True,(0,255,220))
+    current_image_rect = current_image_surface.get_rect(center = ((w+aspectY_surface.get_width())/2,h/2))
+    Crop_surface = game_font.render("Quit",True,(0,255,220))
+    Crop_rect = Crop_surface.get_rect(center = ((w+aspectY_surface.get_width())/2,h*0.9))
+
 
 
 def CropImage():
   global imageIndex
+  if done:
+    return
   imageCropStart = [cropStartPoint[0]-current_image_rect.left,cropStartPoint[1]-current_image_rect.top]
   imageCropEnd = [imageCropStart[0]+cropWidth, imageCropStart[1]+cropHeight]
   imageCropStart[0] = (imageCropStart[0]/current_image_surface.get_width())
@@ -119,7 +128,7 @@ def cropOutline():
     moveStartPoint[0] = posX
     moveStartPoint[1] = posY
   
-  if cropStartPoint and cropWidth and cropHeight:
+  if cropStartPoint and cropWidth and cropHeight and not done:
     # Change width and height if larger than imaqge
     if (cropStartPoint[0] + cropWidth > current_image_rect.right):
       cropWidth = current_image_rect.right -cropStartPoint[0]
@@ -137,6 +146,18 @@ w, h = py.display.get_surface().get_size()
 running = True
 lastType = 0;
 setCurrentImage()
+
+
+aspectX_surface = game_font.render(f"{int(aspectX)}x",True,(0,255,220))
+aspectX_rect = aspectX_surface.get_rect(center = ((w-aspectX_surface.get_width())/2,100))
+
+aspectY_surface = game_font.render(f"{int(aspectY)}",True,(0,255,220))
+aspectY_rect = aspectY_surface.get_rect(center = ((w+aspectY_surface.get_width())/2,100))
+
+Crop_surface = game_font.render("Crop Image",True,(0,255,220))
+Crop_rect = Crop_surface.get_rect(center = ((w+aspectY_surface.get_width())/2,h*0.9))
+
+
 while running:
   screen.fill(background_colour)
   for event in py.event.get():  
@@ -144,7 +165,10 @@ while running:
       running = False
     if event.type == py.MOUSEBUTTONDOWN: 
       if (Crop_rect.collidepoint(event.pos)):
-        CropImage()
+        if not done:
+          CropImage()
+        else:
+          running = False
       if  (aspectX_rect.collidepoint(event.pos)):
         if (event.button == 1):
           aspectX+=1
@@ -180,28 +204,12 @@ while running:
             cropHeight -= 4
             aspect = aspectY/aspectX
             cropWidth = cropHeight*aspect
-        
-        #current_image_rect.topleft
     if event.type == py.MOUSEBUTTONUP:
       if  selectingCrop and event.button == 1:
         selectingCrop = False
       if event.button == 3:
         movingCrop = False
 
-
-
-
-
-
-
-  aspectX_surface = game_font.render(f"{int(aspectX)}x",True,(0,255,220))
-  aspectX_rect = aspectX_surface.get_rect(center = ((w-aspectX_surface.get_width())/2,100))
-
-  aspectY_surface = game_font.render(f"{int(aspectY)}",True,(0,255,220))
-  aspectY_rect = aspectY_surface.get_rect(center = ((w+aspectY_surface.get_width())/2,100))
-
-  Crop_surface = game_font.render("Crop Image",True,(0,255,220))
-  Crop_rect = Crop_surface.get_rect(center = ((w+aspectY_surface.get_width())/2,h*0.9))
 
   screen.blit(aspectX_surface,aspectX_rect)
   screen.blit(aspectY_surface,aspectY_rect)
