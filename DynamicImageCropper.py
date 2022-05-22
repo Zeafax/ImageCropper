@@ -1,7 +1,9 @@
-from msilib.schema import DrLocator
-from operator import truediv
-from turtle import window_width
+from copyreg import constructor
+from traceback import print_tb
+from turtle import pu
 import pygame as py
+from PIL import Image
+import os
 
 py.init()
 
@@ -11,8 +13,10 @@ background_colour = (15,16,18)
 screen = py.display.set_mode((width, height))
 py.display.set_caption('Image Cropper')
 screen.fill(background_colour)
-py.display.flip()
+#py.display.flip()
 
+imageArray = os.listdir("img")
+print(imageArray)
 imageIndex = 0
 aspectX = 1
 aspectY = 1
@@ -23,36 +27,63 @@ cropWidth = 0
 cropHeight = 0
 selectingCrop = False
 movingCrop = False
-
 game_font = py.font.Font("Roboto-Regular.ttf",60)
-
-current_image_surface = py.image.load("img/2.jpg")
-
-(imgWidth,imgHeight) = current_image_surface.get_size()
-
-if (imgWidth < imgHeight):
-  #imgHeight = max with
-  ratio = imgWidth/imgHeight
-  imgHeight = 800;
-  imgWidth = imgHeight*ratio
-else: 
-  ratio = imgHeight/imgWidth
-  imgWidth = 800;
-  imgHeight = imgWidth*ratio
-
-current_image_surface = py.transform.scale(py.image.load("img/2.jpg").convert_alpha(), (imgWidth, imgHeight))
-
-current_image_rect = current_image_surface.get_rect(center = (500,500))
 
 
 def setCurrentImage():
-  global current_image_rect, current_image_surface
+  global current_image_rect, current_image_surface, imageIndex
+  try:
+    path = os.path.join("img",imageArray[imageIndex])
+    current_image_surface = py.image.load(path)
+    
+    (imgWidth,imgHeight) = current_image_surface.get_size()
+
+    if (imgWidth < imgHeight):
+      #imgHeight = max with
+      ratio = imgWidth/imgHeight
+      imgHeight = 800;
+      imgWidth = imgHeight*ratio
+    else: 
+      ratio = imgHeight/imgWidth
+      imgWidth = 800;
+      imgHeight = imgWidth*ratio
+
+    current_image_surface = py.transform.scale(py.image.load(path).convert_alpha(), (imgWidth, imgHeight))
+
+    current_image_rect = current_image_surface.get_rect(center = (500,500))
+
+
+  except:
+    print("No more Images")
+
 
 def CropImage():
-  
+  global imageIndex
   imageCropStart = [cropStartPoint[0]-current_image_rect.left,cropStartPoint[1]-current_image_rect.top]
-  imageCropEnd = [imageCropStart[0]+cropWidth, imageCropStart[1]+cropWidth]
-  print (f"Crop image {imageCropStart}, {imageCropEnd}")
+  imageCropEnd = [imageCropStart[0]+cropWidth, imageCropStart[1]+cropHeight]
+  imageCropStart[0] = (imageCropStart[0]/current_image_surface.get_width())
+  imageCropStart[1] = (imageCropStart[1]/current_image_surface.get_height())
+
+  imageCropEnd[0] = (imageCropEnd[0]/current_image_surface.get_width())
+  imageCropEnd[1] = (imageCropEnd[1]/current_image_surface.get_height())
+  path = os.path.join("img",imageArray[imageIndex])
+  img = Image.open(path)
+  width,height = img.size
+
+  left = round(width * imageCropStart[0])
+  top = round (height *imageCropStart[1])
+  right = round(width * imageCropEnd[0])
+  bottom = round (width *imageCropEnd[1])
+  if (aspectX == aspectY):
+    bottom = top+(right-left)
+
+  img1 = img.crop((left,top,right,bottom))
+  savePath = ["out", f"{imageIndex}.jpg"]
+  img1 = img1.save(os.path.join(*savePath))
+
+  imageIndex +=1
+  setCurrentImage()
+  
 
 
 def cropOutline():
@@ -116,6 +147,7 @@ def updateCropSettings():
 w, h = py.display.get_surface().get_size()
 running = True
 lastType = 0;
+setCurrentImage()
 while running:
   screen.fill(background_colour)
   for event in py.event.get():
@@ -145,7 +177,6 @@ while running:
           cropStartPoint = [event.pos[0], event.pos[1]]
           selectingCrop = True
         if event.button == 3:
-          print("move")
           moveStartPoint = [event.pos[0], event.pos[1]]
           movingCrop = True
         if event.button == 4:
@@ -172,7 +203,6 @@ while running:
       if  selectingCrop and event.button == 1:
         selectingCrop = False
       if event.button == 3:
-        print("Stop moving")
         movingCrop = False
 
 
